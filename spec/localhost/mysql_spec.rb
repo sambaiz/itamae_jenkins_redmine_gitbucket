@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe package('mariadb') do
+describe package('mariadb-server') do
   it { should be_installed }
 end
 
