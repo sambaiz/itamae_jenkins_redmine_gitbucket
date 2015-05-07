@@ -9,6 +9,8 @@ describe service('firewalld') do
   it { should be_running }
 end
 
+# fail
+# http://qiita.com/ikaro1192/items/6ca17ccd2eb677656bfb
 %w(80).each do |port_num|
   describe port(port_num) do
     it { should be_listening }

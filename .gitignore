@@ -67,3 +67,4 @@ build/
 
 vagrant-aws.pem
 .vagrant
+Vagrantfile
