@@ -59,3 +59,20 @@
 #     auth_methods: %w(publickey password)
 #     # password: 'please use keys'
 #   }
+
+task :install_gitbucket do
+  on roles(:app) do
+    execute "wget https://github.com/takezoe/gitbucket/releases/download/3.1.1/gitbucket.war -P /var/lib/tomcat/webapps"
+    upload! "../file/apache/gitbucket.conf", "/etc/httpd/conf.d/gitbucket.conf"
+    execute "sudo systemctl restart tomcat"
+  end
+end
+
+task :install_jenkins do
+  on roles(:app) do
+    execute "wget http://mirrors.jenkins-ci.org/war/latest/jenkins.war -P /var/lib/tomcat/webapps"
+    upload! "../file/apache/jenkins.conf", "/etc/httpd/conf.d/jenkins.conf"
+    execute "sudo systemctl restart tomcat"
+    execute "sudo systemctl restart httpd"
+  end
+end
