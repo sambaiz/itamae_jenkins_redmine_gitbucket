@@ -3,5 +3,5 @@ production:
   database: db_redmine
   host: localhost
   username: user_redmine
-  password: "(user password)"
+  password: "password"
   encoding: utf8
