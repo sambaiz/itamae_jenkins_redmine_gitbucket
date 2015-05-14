@@ -57,12 +57,8 @@ end
 remote_file "/etc/httpd/conf.d/redmine.conf"
 
 # redmine_github_hook pluginをインストール
-execute "install redmine_github_hook plugin" do
-    command <<-EOL
-        cd /var/lib/redmine/plugins
-        sudo git clone https://github.com/koppen/redmine_github_hook.git
-    EOL
-    not_if "test -e /var/lib/redmine/plugins/redmine_github_hook"
+git "/var/lib/redmine/plugins/redmine_github_hook" do
+    repository "https://github.com/koppen/redmine_github_hook.git"
 end
 
 service 'httpd' do
