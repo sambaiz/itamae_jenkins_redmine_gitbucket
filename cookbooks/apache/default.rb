@@ -1,5 +1,8 @@
 package 'httpd'
 
+# index.htmlなどがないときにファイル一覧が表示されなくする
+execute 'sudo sed -ie "s/Options Indexes FollowSymLinks/# Options -Indexes FollowSymLinks/g" /etc/httpd/conf/httpd.conf'
+
 service 'httpd' do
   action [:start, :enable]
 end

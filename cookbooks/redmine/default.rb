@@ -1,10 +1,12 @@
+# SELinuxをoffに
+execute "setenforce 0"
+execute "sudo sed -i s/SELINUX=enforcing/SELINUX=disabled/ /etc/sysconfig/selinux"
+
 execute "svn co http://svn.redmine.org/redmine/branches/3.0-stable /var/lib/redmine" do
     not_if "test -e /var/lib/redmine"
 end
 
 remote_file "/var/lib/redmine/config/database.yml"
-
-# execute "sudo sed -i 's/^Defaults\\s*secure_path\\s*=.*/Defaults secure_path = \\/sbin:\\/bin:\\/usr\\/sbin:\\/usr\\/bin:\\/usr\\/local\\/bin/' /etc/sudoers"
 
 %w(mariadb-server ruby).each do |p|
     package p
@@ -19,7 +21,12 @@ execute "create db and user for redmine" do
     EOL
 end
 
-execute "gem install passenger --no-rdoc --no-ri -v 5.0.7"
+gem_package "passenger" do
+    version '5.0.7'
+end
+
+gem_package "bundler"
+
 
 # passenger-install-apache2-module/bundle install に必要なもの
 %w(libcurl-devel openssl-devel zlib-devel httpd-devel ruby-devel apr-devel
@@ -30,31 +37,22 @@ end
 execute "migration" do
     command <<-EOL
         cd /var/lib/redmine
-        gem install bundler
         /usr/local/bin/bundle install
         RAILS_ENV=production /usr/local/bin/rake db:migrate
         /usr/local/bin/rake generate_secret_token
     EOL
 end
 
-#execute "migration" do
-#    command <<-EOL
-#    export ORIG_PATH="$PATH"
-#    sudo -s -E
-#    export PATH="$ORIG_PATH"
-#    /usr/bin/ruby /usr/local/share/gems/gems/passenger-5.0.7/bin/passenger-config --detect-apache2
-#    EOL
-#end
-
+# PassengerのApache用モジュールのインストール
 execute "/usr/local/bin/passenger-install-apache2-module --auto"
 
+# Apacheを実行するユーザー・グループ("apache")が読み書きできるように権限を与える
 execute "sudo chown -R apache:apache /var/lib/redmine"
 
+# ApacheのDocumentRootに指定されているディレクトリにシンボリックリンクを張る
 execute "sudo ln -s /var/lib/redmine/public /var/www/html/redmine"
 
 remote_file "/etc/httpd/conf.d/redmine.conf"
-
-execute 'sudo sed -ie "s/Options Indexes FollowSymLinks/# Options -Indexes FollowSymLinks/g" /etc/httpd/conf/httpd.conf'
 
 service 'httpd' do
   action [:restart]
