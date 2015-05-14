@@ -3,13 +3,10 @@ execute "svn co http://svn.redmine.org/redmine/branches/3.0-stable /var/lib/redm
 end
 
 remote_file "/var/lib/redmine/config/database.yml"
-# remote_file "/etc/httpd/conf.d/redmine.conf"
 
-execute "sudo sed -i 's/^Defaults\\s*secure_path\\s*=.*/Defaults secure_path = \\/sbin:\\/bin:\\/usr\\/sbin:\\/usr\\/bin:\\/usr\\/local\\/bin/' /etc/sudoers"
+# execute "sudo sed -i 's/^Defaults\\s*secure_path\\s*=.*/Defaults secure_path = \\/sbin:\\/bin:\\/usr\\/sbin:\\/usr\\/bin:\\/usr\\/local\\/bin/' /etc/sudoers"
 
-%w(mariadb-server mariadb-devel httpd-devel ruby ruby-devel openssl-devel
-readline-devel zlib-devel curl-devel libyaml-devel libffi-devel libxml2-devel
-libxslt-devel ImageMagick ImageMagick-devel ipa-pgothic-fonts).each do |p|
+%w(mariadb-server ruby).each do |p|
     package p
 end
 
@@ -22,24 +19,40 @@ execute "create db and user for redmine" do
     EOL
 end
 
+execute "gem install passenger --no-rdoc --no-ri -v 5.0.7"
+
+# passenger-install-apache2-module/bundle install に必要なもの
+%w(libcurl-devel openssl-devel zlib-devel httpd-devel ruby-devel apr-devel
+apr-util-devel mariadb-devel ImageMagick ImageMagick-devel).each do |p|
+    package p
+end
+
 execute "migration" do
     command <<-EOL
         cd /var/lib/redmine
         gem install bundler
-        bundle install
-        RAILS_ENV=production rake db:migrate
-        rake generate_secret_token
+        /usr/local/bin/bundle install
+        RAILS_ENV=production /usr/local/bin/rake db:migrate
+        /usr/local/bin/rake generate_secret_token
     EOL
 end
 
-execute "gem install passenger --no-rdoc --no-ri"
+#execute "migration" do
+#    command <<-EOL
+#    export ORIG_PATH="$PATH"
+#    sudo -s -E
+#    export PATH="$ORIG_PATH"
+#    /usr/bin/ruby /usr/local/share/gems/gems/passenger-5.0.7/bin/passenger-config --detect-apache2
+#    EOL
+#end
 
-package "rubygem-rake"
-execute "passenger-install-apache2-module --auto"
+execute "/usr/local/bin/passenger-install-apache2-module --auto"
 
 execute "sudo chown -R apache:apache /var/lib/redmine"
 
 execute "sudo ln -s /var/lib/redmine/public /var/www/html/redmine"
+
+remote_file "/etc/httpd/conf.d/redmine.conf"
 
 execute 'sudo sed -ie "s/Options Indexes FollowSymLinks/# Options -Indexes FollowSymLinks/g" /etc/httpd/conf/httpd.conf'
 
