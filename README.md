@@ -29,7 +29,9 @@ end
     - MariaDB
     - GitBucket (+ Git & Gitbucket plugin)
     - Jenkins
-    - Redmine (+ redmine_github_hook plugin)
+    - Redmine (+ passenger, redmine_github_hook plugin)
+
+- タイミングが悪いとJenkinsのプラグイン入れるところで失敗するので、その場合はもう一回実行する
 
 ```
 itamae ssh -h 192.168.33.10 -u vagrant roles/web.rb
@@ -69,16 +71,16 @@ URL: http://192.168.33.10/gitbucket/
 - 実行ユーザ(nobody?)がリポジトリを読み書きできなければいけない
 
 ```
-mkdir /var/lib/redmine/repo
-chmod a+rw /var/lib/redmine/repo
+sudo mkdir /var/lib/redmine/repo
+sudo chmod a+rw /var/lib/redmine/repo
 cd /var/lib/redmine/repo
 git clone --bare http://192.168.33.10/gitbucket/git/root/testRep.git
-sudo chmod -R a+rw testRep.git
+chmod -R a+rw testRep.git
 ```
 
 - プロジェクトを作ってリポジトリの設定のパスに/var/lib/redmine/repo/testRep.gitを指定
 - GitBucketのService Hooksに以下のURLを入力してAdd
 
 ```
-http://192.168.33.10/redmine/github_hook?project_id=(identifier)
+http://localhost/redmine/github_hook?project_id=(project identifier)
 ```
